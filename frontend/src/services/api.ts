@@ -25,6 +25,12 @@ export const analyticsApi = {
   getAnaliseParesImpares: () => api.get('/analytics/pares-impares'),
   getAnaliseQuadrantes: () => api.get('/analytics/quadrantes'),
   getAnaliseSoma: () => api.get('/analytics/soma-dezenas'),
+  getCidadesGanhadoras: (limite: number = 20) =>
+    api.get('/analytics/cidades-ganhadoras', { params: { limite } }),
+  getNumerosVencedoresCidade: (cidade: string, uf: string, limite: number = 10) =>
+    api.get('/analytics/numeros-vencedores-cidade', { params: { cidade, uf, limite } }),
+  getNumerosVencedoresEstado: (uf: string, limite: number = 10) =>
+    api.get('/analytics/numeros-vencedores-estado', { params: { uf, limite } }),
   verificarCombinacao: (dezenas: number[]) =>
     api.post('/analytics/verificar-combinacao', { dezenas }),
 }

@@ -9,6 +9,7 @@ import ParesImpares from './pages/ParesImpares'
 import Quadrantes from './pages/Quadrantes'
 import SomaDezenas from './pages/SomaDezenas'
 import GeradorJogos from './pages/GeradorJogos'
+import CidadesGanhadoras from './pages/CidadesGanhadoras'
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route path="pares-impares" element={<ParesImpares />} />
           <Route path="quadrantes" element={<Quadrantes />} />
           <Route path="soma-dezenas" element={<SomaDezenas />} />
+          <Route path="cidades-ganhadoras" element={<CidadesGanhadoras />} />
           <Route path="gerador" element={<GeradorJogos />} />
         </Route>
       </Routes>

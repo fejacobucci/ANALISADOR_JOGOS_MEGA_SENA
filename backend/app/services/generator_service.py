@@ -370,3 +370,76 @@ class GeneratorService:
             jogos = todas_combinacoes[:min(len(todas_combinacoes), 200)]
 
         return [list(jogo) for jogo in jogos]
+
+    def gerar_por_cidade_vencedora(
+        self,
+        quantidade_jogos: int = 1,
+        cidade: str = None,
+        uf: str = None,
+        top_n: int = 15
+    ) -> List[List[int]]:
+        """
+        Gera jogos baseados nos números que mais saíram em vitórias de uma cidade/estado
+
+        Args:
+            quantidade_jogos: Número de jogos a gerar
+            cidade: Nome da cidade (opcional, se não informado usa apenas o estado)
+            uf: Sigla do estado
+            top_n: Usar os top N números mais frequentes nas vitórias
+
+        Returns:
+            Lista de jogos gerados
+        """
+        if not uf:
+            raise ValueError("UF é obrigatório")
+
+        # Busca números vencedores
+        if cidade:
+            numeros_vencedores = self.analytics.numeros_vencedores_por_cidade(cidade, uf, top_n)
+        else:
+            numeros_vencedores = self.analytics.numeros_vencedores_por_estado(uf, top_n)
+
+        if not numeros_vencedores:
+            raise ValueError(f"Nenhum dado encontrado para {'cidade ' + cidade if cidade else 'estado'} {uf}")
+
+        # Pool de números baseado nas vitórias
+        pool = [n['dezena'] for n in numeros_vencedores]
+
+        # Se não tiver 6 números, completa com números aleatórios
+        if len(pool) < 6:
+            disponiveis = [n for n in range(1, 61) if n not in pool]
+            pool.extend(random.sample(disponiveis, 6 - len(pool)))
+
+        jogos = []
+        tentativas = 0
+        max_tentativas = quantidade_jogos * 100
+
+        while len(jogos) < quantidade_jogos and tentativas < max_tentativas:
+            # Prioriza números do topo da lista (mais frequentes nas vitórias)
+            jogo = []
+
+            # Pega pelo menos 3-4 números dos mais frequentes
+            top_3 = min(4, len(pool))
+            principais = random.sample(pool[:top_3], min(3, top_3))
+            jogo.extend(principais)
+
+            # Completa com outros números do pool
+            outros = [n for n in pool if n not in jogo]
+            if outros:
+                faltam = 6 - len(jogo)
+                jogo.extend(random.sample(outros, min(faltam, len(outros))))
+
+            # Se ainda falta, completa com números aleatórios
+            if len(jogo) < 6:
+                disponiveis = [n for n in range(1, 61) if n not in jogo]
+                jogo.extend(random.sample(disponiveis, 6 - len(jogo)))
+
+            jogo = sorted(jogo)
+
+            # Verifica se já foi sorteado
+            if not self.analytics.combinacao_ja_sorteada(jogo):
+                jogos.append(jogo)
+
+            tentativas += 1
+
+        return jogos

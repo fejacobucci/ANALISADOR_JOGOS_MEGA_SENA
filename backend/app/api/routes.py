@@ -175,6 +175,39 @@ async def get_analise_soma(db: Session = Depends(get_db)):
     return analytics.analise_soma_dezenas()
 
 
+@router.get("/analytics/cidades-ganhadoras")
+async def get_cidades_ganhadoras(
+    limite: int = 20,
+    db: Session = Depends(get_db)
+):
+    """Retorna ranking de cidades e estados com mais vitórias"""
+    analytics = AnalyticsService(db)
+    return analytics.analise_cidades_ganhadoras(limite)
+
+
+@router.get("/analytics/numeros-vencedores-cidade")
+async def get_numeros_vencedores_cidade(
+    cidade: str,
+    uf: str,
+    limite: int = 10,
+    db: Session = Depends(get_db)
+):
+    """Retorna números que mais saíram em vitórias de uma cidade"""
+    analytics = AnalyticsService(db)
+    return analytics.numeros_vencedores_por_cidade(cidade, uf, limite)
+
+
+@router.get("/analytics/numeros-vencedores-estado")
+async def get_numeros_vencedores_estado(
+    uf: str,
+    limite: int = 10,
+    db: Session = Depends(get_db)
+):
+    """Retorna números que mais saíram em vitórias de um estado"""
+    analytics = AnalyticsService(db)
+    return analytics.numeros_vencedores_por_estado(uf, limite)
+
+
 @router.post("/analytics/verificar-combinacao")
 async def verificar_combinacao(
     dezenas: List[int],
@@ -252,6 +285,13 @@ async def gerar_jogos(
                 params.get('usar_quadrantes', True),
                 params.get('usar_soma', True),
                 params.get('pares', 3)
+            )
+        elif metodo == "cidade_vencedora":
+            jogos = generator.gerar_por_cidade_vencedora(
+                quantidade,
+                params.get('cidade'),
+                params.get('uf'),
+                params.get('top_n', 15)
             )
         else:
             raise HTTPException(status_code=400, detail=f"Método '{metodo}' não reconhecido")

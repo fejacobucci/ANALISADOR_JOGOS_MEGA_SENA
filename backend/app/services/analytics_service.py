@@ -403,3 +403,164 @@ class AnalyticsService:
         resultado.sort(key=lambda x: x['frequencia'], reverse=True)
 
         return resultado[:limite]
+
+    def analise_cidades_ganhadoras(self, limite: int = 20) -> Dict:
+        """
+        Analisa as cidades que mais tiveram ganhadores da Mega Sena
+
+        Args:
+            limite: Quantidade de cidades a retornar
+
+        Returns:
+            Estatísticas de cidades ganhadoras
+        """
+        from ..models.models import CidadeGanhadora
+
+        # Conta vitórias por cidade
+        cidades_ranking = self.db.query(
+            CidadeGanhadora.cidade,
+            CidadeGanhadora.uf,
+            func.count(CidadeGanhadora.id).label('vitorias')
+        ).filter(
+            CidadeGanhadora.cidade.isnot(None)
+        ).group_by(
+            CidadeGanhadora.cidade,
+            CidadeGanhadora.uf
+        ).order_by(
+            desc('vitorias')
+        ).limit(limite).all()
+
+        # Conta vitórias por estado
+        estados_ranking = self.db.query(
+            CidadeGanhadora.uf,
+            func.count(CidadeGanhadora.id).label('vitorias')
+        ).filter(
+            CidadeGanhadora.uf.isnot(None)
+        ).group_by(
+            CidadeGanhadora.uf
+        ).order_by(
+            desc('vitorias')
+        ).all()
+
+        total_vitorias = self.db.query(func.count(CidadeGanhadora.id)).scalar()
+
+        return {
+            'cidades': [
+                {
+                    'cidade': c.cidade,
+                    'uf': c.uf,
+                    'vitorias': c.vitorias,
+                    'percentual': round((c.vitorias / total_vitorias) * 100, 2) if total_vitorias > 0 else 0
+                }
+                for c in cidades_ranking
+            ],
+            'estados': [
+                {
+                    'uf': e.uf,
+                    'vitorias': e.vitorias,
+                    'percentual': round((e.vitorias / total_vitorias) * 100, 2) if total_vitorias > 0 else 0
+                }
+                for e in estados_ranking
+            ],
+            'total_vitorias': total_vitorias
+        }
+
+    def numeros_vencedores_por_cidade(self, cidade: str, uf: str, limite: int = 10) -> List[Dict]:
+        """
+        Retorna os números que mais saíram em jogos vencedores de uma cidade específica
+
+        Args:
+            cidade: Nome da cidade
+            uf: Sigla do estado
+            limite: Quantidade de números a retornar
+
+        Returns:
+            Lista de dezenas mais sorteadas em jogos vencedores da cidade
+        """
+        from ..models.models import CidadeGanhadora
+
+        # Busca concursos vencedores da cidade
+        concursos_vencedores = self.db.query(
+            CidadeGanhadora.concurso_id
+        ).filter(
+            CidadeGanhadora.cidade == cidade,
+            CidadeGanhadora.uf == uf
+        ).all()
+
+        concursos_ids = [c.concurso_id for c in concursos_vencedores]
+
+        if not concursos_ids:
+            return []
+
+        # Conta frequência das dezenas nesses concursos
+        frequencias = self.db.query(
+            DezenaSorteada.dezena,
+            func.count(DezenaSorteada.id).label('frequencia')
+        ).filter(
+            DezenaSorteada.concurso_id.in_(concursos_ids)
+        ).group_by(
+            DezenaSorteada.dezena
+        ).order_by(
+            desc('frequencia')
+        ).limit(limite).all()
+
+        total_concursos = len(concursos_ids)
+
+        return [
+            {
+                'dezena': f.dezena,
+                'frequencia': f.frequencia,
+                'percentual': round((f.frequencia / (total_concursos * 6)) * 100, 2) if total_concursos > 0 else 0,
+                'total_concursos_cidade': total_concursos
+            }
+            for f in frequencias
+        ]
+
+    def numeros_vencedores_por_estado(self, uf: str, limite: int = 10) -> List[Dict]:
+        """
+        Retorna os números que mais saíram em jogos vencedores de um estado
+
+        Args:
+            uf: Sigla do estado
+            limite: Quantidade de números a retornar
+
+        Returns:
+            Lista de dezenas mais sorteadas em jogos vencedores do estado
+        """
+        from ..models.models import CidadeGanhadora
+
+        # Busca concursos vencedores do estado
+        concursos_vencedores = self.db.query(
+            CidadeGanhadora.concurso_id
+        ).filter(
+            CidadeGanhadora.uf == uf
+        ).all()
+
+        concursos_ids = [c.concurso_id for c in concursos_vencedores]
+
+        if not concursos_ids:
+            return []
+
+        # Conta frequência das dezenas nesses concursos
+        frequencias = self.db.query(
+            DezenaSorteada.dezena,
+            func.count(DezenaSorteada.id).label('frequencia')
+        ).filter(
+            DezenaSorteada.concurso_id.in_(concursos_ids)
+        ).group_by(
+            DezenaSorteada.dezena
+        ).order_by(
+            desc('frequencia')
+        ).limit(limite).all()
+
+        total_concursos = len(concursos_ids)
+
+        return [
+            {
+                'dezena': f.dezena,
+                'frequencia': f.frequencia,
+                'percentual': round((f.frequencia / (total_concursos * 6)) * 100, 2) if total_concursos > 0 else 0,
+                'total_concursos_estado': total_concursos
+            }
+            for f in frequencias
+        ]

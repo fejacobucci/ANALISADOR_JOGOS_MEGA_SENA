@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { Home, Upload, BarChart3, TrendingUp, Percent, Grid3x3, Plus, Dices } from 'lucide-react'
+import { Home, Upload, BarChart3, TrendingUp, Percent, Grid3x3, Plus, Dices, MapPin } from 'lucide-react'
 import styles from './Layout.module.css'
 
 const Layout = () => {
@@ -14,6 +14,7 @@ const Layout = () => {
     { path: '/pares-impares', icon: Percent, label: 'Pares e Ímpares' },
     { path: '/quadrantes', icon: Grid3x3, label: 'Quadrantes' },
     { path: '/soma-dezenas', icon: Plus, label: 'Soma das Dezenas' },
+    { path: '/cidades-ganhadoras', icon: MapPin, label: 'Cidades Ganhadoras' },
     { path: '/gerador', icon: Dices, label: 'Gerador de Jogos' },
   ]
 
